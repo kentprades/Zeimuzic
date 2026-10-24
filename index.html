@@ -586,19 +586,27 @@
 
   function updateMediaMetadata(item) {
     if (!mediaSession || !('MediaMetadata' in window)) return;
-    const highResolutionArt = item.dataset.art.endsWith('.jpg')
-      ? item.dataset.art.replace('covers/', 'covers/hires/')
-      : item.dataset.art;
-    const artworkUrl = new URL(highResolutionArt, document.baseURI).href;
-    const artworkType = artworkUrl.endsWith('.svg') ? 'image/svg+xml' : 'image/jpeg';
-    const artworkSize = artworkType === 'image/svg+xml' ? '512x512' : '720x720';
+    const coverFile = item.dataset.art.split('/').pop();
+    const highResolutionFile = coverFile === 'song13.jpg' ? 'song13.png' : coverFile;
+    const artworkSources = [
+      { src: `covers/hires/${highResolutionFile}`, sizes: highResolutionFile === 'song13.png' ? '144x144' : '720x720' },
+      { src: item.dataset.art, sizes: '144x144' }
+    ];
+    const artwork = artworkSources.map(({ src, sizes }) => {
+      const extension = src.split('.').pop().toLowerCase();
+      const type = extension === 'png' ? 'image/png' : 'image/jpeg';
+      return {
+        src: new URL(src, document.baseURI).href,
+        sizes,
+        type
+      };
+    });
+
     mediaSession.metadata = new MediaMetadata({
       title: item.dataset.title.replace(/\s*\(By Kent is on the Paper\)\s*$/, ''),
       artist: 'Kent is on the Paper',
       album: 'Kent is on the Paper',
-      artwork: [
-        { src: artworkUrl, sizes: artworkSize, type: artworkType }
-      ]
+      artwork
     });
   }
 
