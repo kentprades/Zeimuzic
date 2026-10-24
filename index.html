@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="apple-touch-icon" sizes="180x180" href="zmusic.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="zmusic.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="zmusic.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZEIMUSIC</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root { --ink: #0b050c; --panel: rgba(35, 13, 34, .62); --panel-strong: rgba(57, 17, 48, .86); --paper: #fff1fb; --muted: #b79aae; --acid: #ff2bd6; --cyan: #ff78ec; --line: rgba(255, 112, 226, .24); }
+    * { box-sizing: border-box; }
+    body { background: radial-gradient(circle at 8% 0%, rgba(255, 43, 214, .18), transparent 30%), radial-gradient(circle at 92% 42%, rgba(255, 120, 236, .12), transparent 25%), var(--ink); color: var(--paper); font-family: 'Space Grotesk', sans-serif; margin-bottom: 132px; overflow-x: hidden; }
+    body::before { content: ''; position: fixed; inset: 0; pointer-events: none; opacity: .2; background-image: linear-gradient(rgba(255, 93, 221, .08) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 93, 221, .08) 1px, transparent 1px); background-size: 44px 44px; -webkit-mask-image: linear-gradient(to bottom, black, transparent 80%); mask-image: linear-gradient(to bottom, black, transparent 80%); }
+    body::after { content: ''; position: fixed; inset: 0; pointer-events: none; background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(255,255,255,.012) 4px); mix-blend-mode: screen; }
+    .navbar { position: sticky; top: 0; z-index: 10; background: rgba(18, 5, 17, .7); border-bottom: 1px solid var(--line); padding: 18px 0; -webkit-backdrop-filter: blur(20px) saturate(145%); backdrop-filter: blur(20px) saturate(145%); box-shadow: 0 0 28px rgba(255, 43, 214, .08); transition: padding .45s ease, background .45s ease, box-shadow .45s ease; }
+    .navbar.scrolled { padding: 9px 0; background: rgba(27, 7, 25, .9); box-shadow: 0 8px 35px rgba(255, 43, 214, .18), 0 1px 0 var(--acid); }
+    .nav-shell { display: flex; align-items: center; justify-content: space-between; gap: 20px; min-width: 0; }
+    .navbar-brand { color: var(--paper) !important; font-weight: 700; letter-spacing: .12em; font-size: .9rem; }
+    .navbar-brand hr { display: inline-block; width: 34px; vertical-align: middle; margin: 0 10px; border-color: var(--acid); opacity: 1; box-shadow: 0 0 10px var(--acid); }
+    .nav-led { display: inline-flex; align-items: end; gap: 3px; height: 22px; margin-left: 4px; vertical-align: middle; }
+    .nav-led i { display: block; width: 3px; height: 9px; background: var(--acid); box-shadow: 0 0 7px var(--acid), 0 0 14px var(--acid); transform-origin: bottom; transform: scaleY(.35); transition: transform .08s linear, box-shadow .08s linear; }
+    .nav-led i:nth-child(2) { height: 16px; animation-delay: -.2s; }
+    .nav-led i:nth-child(3) { height: 22px; animation-delay: -.55s; }
+    .nav-led i:nth-child(4) { height: 13px; animation-delay: -.35s; }
+    .nav-led i:nth-child(5) { height: 19px; animation-delay: -.7s; }
+    .nav-now { display: flex; align-items: center; gap: 11px; max-width: 0; opacity: 0; overflow: hidden; transform: translateX(18px) skewX(-8deg); transition: max-width .55s ease, opacity .35s ease, transform .55s ease; }
+    .navbar.scrolled .nav-now { max-width: 260px; opacity: 1; transform: translateX(0) skewX(0); }
+    .nav-art-frame { position: relative; width: 0; height: 0; flex: 0 0 auto; border: 1px solid var(--acid); transform: rotate(-8deg); transition: width .45s ease, height .45s ease, box-shadow .45s ease, transform .45s ease; }
+    .nav-art-frame::before { content: ''; position: absolute; inset: -5px; border: 1px solid rgba(255, 120, 236, .55); opacity: 0; animation: profilePulse 1.8s ease-in-out infinite; }
+    .nav-art-frame::after { content: ''; position: absolute; left: 0; right: 0; top: -10%; height: 2px; background: var(--paper); box-shadow: 0 0 8px var(--acid); opacity: 0; animation: profileScan 1.8s linear infinite; }
+    .nav-art { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .navbar.scrolled .nav-art-frame { width: 38px; height: 38px; box-shadow: 0 0 18px rgba(255, 43, 214, .7); transform: rotate(8deg); }
+    .navbar.scrolled .nav-art-frame::before, .navbar.scrolled .nav-art-frame::after { opacity: 1; }
+    body.is-playing .nav-led i { transform: scaleY(calc(.35 + var(--beat, .35))); box-shadow: 0 0 calc(7px + (var(--beat, .35) * 10px)) var(--acid), 0 0 calc(14px + (var(--beat, .35) * 18px)) var(--acid); }
+    body.is-playing .featured-track, body.is-playing .now-playing { box-shadow: inset 0 1px rgba(255,220,249,.08), 0 0 calc(24px + (var(--beat, .35) * 30px)) rgba(255,43,214,.18), 0 24px 70px rgba(0,0,0,.3); }
+    body.is-playing .nav-art-frame { box-shadow: 0 0 calc(18px + (var(--beat, .35) * 22px)) var(--acid); }
+    .nav-kicker { display: block; color: var(--acid); font: 500 .55rem 'DM Mono', monospace; letter-spacing: .14em; }
+    .nav-track { display: block; max-width: 190px; overflow: hidden; color: var(--paper); font-size: .72rem; white-space: nowrap; text-overflow: ellipsis; }
+    .container { max-width: 1180px; }
+    .player-box { position: relative; display: grid; grid-template-columns: minmax(280px, .85fr) minmax(360px, 1.15fr); gap: clamp(30px, 6vw, 90px); padding: clamp(38px, 7vw, 88px) 0 40px; margin-top: 0; }
+    .player-box::after { content: '● SYSTEM ONLINE'; position: absolute; top: 28px; right: 0; color: var(--cyan); font: 500 .62rem 'DM Mono', monospace; letter-spacing: .12em; animation: statusPulse 2.8s ease-in-out infinite; }
+    .player-box::before { content: 'KENT IS ON THE PAPER / 2026'; grid-column: 1 / -1; color: var(--acid); font: 500 .7rem 'DM Mono', monospace; letter-spacing: .16em; margin-bottom: -48px; }
+    .featured-track, .queue-panel { position: relative; min-width: 0; background: linear-gradient(145deg, rgba(75, 25, 65, .5), rgba(16, 5, 15, .66)); border: 1px solid var(--line); box-shadow: inset 0 1px rgba(255,220,249,.08), 0 24px 70px rgba(0,0,0,.3); -webkit-backdrop-filter: blur(22px) saturate(125%); backdrop-filter: blur(22px) saturate(125%); }
+    .featured-track::before, .queue-panel::before { content: ''; position: absolute; top: -1px; left: -1px; width: 42px; height: 42px; border-top: 2px solid var(--cyan); border-left: 2px solid var(--cyan); pointer-events: none; }
+    .featured-track::after, .queue-panel::after { content: ''; position: absolute; right: -1px; bottom: -1px; width: 42px; height: 42px; border-right: 2px solid var(--acid); border-bottom: 2px solid var(--acid); pointer-events: none; }
+    .featured-track { padding: clamp(18px, 3vw, 34px); }
+    .featured-track h4::before { content: 'NOW TRANSMITTING / '; display: block; margin-bottom: 12px; color: var(--cyan); font: 500 .58rem 'DM Mono', monospace; letter-spacing: .14em; }
+    .queue-panel { align-self: start; padding: clamp(18px, 3vw, 30px); }
+    .cover-stage { position: relative; display: inline-block; width: min(100%, 430px); margin-bottom: 25px; isolation: isolate; }
+    .cover-stage::before, .cover-stage::after { content: ''; position: absolute; z-index: -1; pointer-events: none; opacity: .18; transition: opacity .25s ease, transform .12s linear; }
+    .cover-stage::before { inset: -16%; background: radial-gradient(circle, var(--acid) 0%, var(--cyan) 28%, transparent 67%); filter: blur(24px); transform: scale(calc(.88 + (var(--beat, .35) * .24))); }
+    .cover-stage::after { inset: -8%; border: 1px solid var(--cyan); box-shadow: 0 0 24px var(--acid), inset 0 0 24px var(--cyan); transform: scale(calc(.94 + (var(--beat, .35) * .12))) rotate(2deg); }
+    body.is-playing .cover-stage::before, body.is-playing .cover-stage::after { opacity: calc(.28 + (var(--beat, .35) * .5)); }
+    .album-art { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 0; box-shadow: 10px 10px 0 var(--acid), 0 0 32px rgba(255, 43, 214, .2); transition: transform .35s ease, box-shadow .35s ease; }
+    .album-art:hover { transform: translate(-5px, -5px); box-shadow: 14px 14px 0 var(--cyan), 0 0 44px rgba(255, 43, 214, .38); }
+    h4 { color: var(--paper); font-size: clamp(1.7rem, 3.6vw, 3.2rem); line-height: .98; letter-spacing: -.04em; margin-bottom: 12px; }
+    #current-genre { color: var(--cyan) !important; font: .76rem 'DM Mono', monospace; text-transform: uppercase; letter-spacing: .1em; }
+    .queue-heading { display: flex; align-items: end; justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 13px; margin-top: 0 !important; color: var(--paper); font-size: 1.5rem; }
+    .queue-heading::before { content: 'AUDIO INDEX'; position: absolute; margin-top: -36px; color: var(--muted); font: 500 .58rem 'DM Mono', monospace; letter-spacing: .14em; }
+    .queue-heading::after { content: '10 TRACKS'; color: var(--muted); font: .65rem 'DM Mono', monospace; letter-spacing: .1em; }
+    #queue { max-height: min(650px, calc(100vh - 215px)); overflow-y: auto; padding-right: 8px; }
+    #queue::-webkit-scrollbar { width: 4px; }
+    #queue::-webkit-scrollbar-thumb { background: linear-gradient(var(--cyan), var(--acid)); }
+    .queue-item { display: flex; align-items: center; gap: 14px; min-height: 76px; padding: 10px 12px; border-bottom: 1px solid var(--line); color: #c8d7d8; cursor: pointer; transition: background .2s ease, color .2s ease, padding .2s ease, transform .2s ease; font-size: .9rem; }
+    .queue-item:hover { background: rgba(255, 43, 214, .12); color: var(--paper); padding-left: 17px; transform: translateX(3px); }
+    .queue-item img { width: 54px; height: 54px; object-fit: cover; border-radius: 0; box-shadow: 0 0 0 1px rgba(255,255,255,.12); flex: 0 0 auto; }
+    .queue-item.active { background: linear-gradient(90deg, rgba(255,43,214,.94), rgba(255,120,236,.82)); color: var(--ink); font-weight: 600; box-shadow: 0 0 24px rgba(255,43,214,.3); }
+    .now-playing { position: fixed; z-index: 5; bottom: 0; left: 0; right: 0; background: rgba(18, 4, 16, .78); padding: 14px clamp(16px, 4vw, 50px) 16px; display: grid; grid-template-columns: minmax(180px, 1fr) minmax(280px, 2fr) minmax(150px, 1fr); align-items: center; border-top: 1px solid var(--line); -webkit-backdrop-filter: blur(24px) saturate(145%); backdrop-filter: blur(24px) saturate(145%); box-shadow: 0 -12px 45px rgba(0,0,0,.3), 0 0 35px rgba(255,43,214,.1); gap: 28px; }
+    .song-name { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .song-art { width: 48px; height: 48px; object-fit: cover; border-radius: 0; }
+    #current-song-name { font-size: .82rem; margin: 0; color: var(--paper); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .progress-container { min-width: 200px; }
+    .progress { width: 100%; height: 5px; background: rgba(141, 178, 190, .22); cursor: pointer; border-radius: 0; overflow: hidden; }
+    .progress-bar { height: 5px; background: linear-gradient(90deg, var(--cyan), var(--acid)); width: 0%; transition: width .2s linear; box-shadow: 0 0 12px var(--cyan); }
+    .time { font: .65rem 'DM Mono', monospace; color: var(--muted); }
+    .controls { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
+    .controls button { display: grid; place-items: center; width: 32px; height: 32px; background: none; border: none; color: var(--paper); cursor: pointer; transition: color .2s ease, transform .2s ease; }
+    .controls button:hover { color: var(--cyan); transform: translateY(-2px); }
+    .controls button.active { color: var(--acid); }
+    .controls svg { width: 17px; height: 17px; }
+    #play { background: linear-gradient(135deg, var(--paper), var(--acid)); color: var(--ink); width: 38px; height: 38px; border-radius: 50%; box-shadow: 0 0 20px rgba(255,43,214,.42); }
+    .extra-controls { display: flex; align-items: center; justify-content: flex-end; gap: 10px; color: var(--muted); }
+    .extra-controls svg { width: 16px; }
+    .volume-slider { width: 110px; accent-color: var(--cyan); }
+    @keyframes statusPulse { 0%, 100% { opacity: .5; } 50% { opacity: 1; text-shadow: 0 0 12px var(--cyan); } }
+    @keyframes profilePulse { 0%, 100% { transform: scale(.92); opacity: .25; } 50% { transform: scale(1.08); opacity: .85; } }
+    @keyframes profileScan { 0% { top: -10%; } 100% { top: 110%; } }
+    @media (max-width: 768px) { body { margin-bottom: 190px; } .navbar-brand { max-width: 58%; min-width: 0; overflow: hidden; white-space: normal; line-height: 1.5; font-size: .75rem; } .nav-led { height: 16px; gap: 2px; } .nav-led i { width: 2px; } .navbar.scrolled .nav-now { max-width: 42%; gap: 6px; } .nav-track { max-width: 100px; font-size: .62rem; } .player-box { display: block; padding-top: 58px; } .player-box::before { display: block; margin-bottom: 30px; } .player-box::after { top: 28px; right: 16px; } .cover-stage { width: min(78vw, 360px); } .album-art { box-shadow: 10px 10px 0 var(--acid); } .queue-panel { margin-top: 58px; } #queue { max-height: 330px; } .now-playing { grid-template-columns: 1fr; gap: 8px; padding: 12px 16px 14px; } .song-name { justify-content: center; } .progress-container { min-width: 0; } .controls { margin-top: 8px; } .extra-controls { justify-content: center; } .volume-slider { width: 150px; } }
+  </style>
+  <style>
+    :root {
+      --ink: #343c35;
+      --panel: #fffdf8;
+      --panel-strong: #fffdf8;
+      --paper: #343c35;
+      --muted: #7b8178;
+      --acid: #d98368;
+      --cyan: #678c83;
+      --line: #e8e2d6;
+      --beat: .35;
+      color-scheme: light;
+    }
+    body {
+      min-height: 100vh;
+      margin-bottom: 116px;
+      overflow-x: hidden;
+      background-color: #f8f6ef;
+      background-image: radial-gradient(#e6e0d3 0.7px, transparent 0.7px);
+      background-size: 18px 18px;
+      color: var(--ink);
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    body::before {
+      opacity: .22;
+      background-image: repeating-linear-gradient(0deg, transparent 0 27px, #d9d2c5 28px, transparent 29px);
+      background-size: 100% 29px;
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+    body::after { display: none; }
+    .navbar, .navbar.scrolled {
+      padding: 14px 0;
+      background: rgba(248, 246, 239, .94);
+      border-bottom: 1px dashed #d8d1c4;
+      box-shadow: 0 3px 0 rgba(52, 60, 53, .04);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+    }
+    .nav-shell { gap: 14px; }
+    .navbar-brand { color: var(--ink) !important; letter-spacing: .08em; }
+    .navbar-brand hr { border-color: var(--line); box-shadow: none; }
+    .nav-led { display: none; }
+    .nav-now, .navbar.scrolled .nav-now {
+      max-width: 270px;
+      opacity: 1;
+      overflow: visible;
+      transform: none;
+    }
+    .nav-art-frame, .navbar.scrolled .nav-art-frame {
+      width: 42px;
+      height: 42px;
+      overflow: hidden;
+      border: 1px solid #d8d1c4;
+      border-radius: 13px 10px 14px 11px;
+      box-shadow: 2px 2px 0 #e8d8ca;
+      transform: rotate(-3deg);
+    }
+    .nav-art-frame::before, .nav-art-frame::after { display: none; }
+    .nav-kicker { color: var(--muted); font: 500 .57rem 'DM Mono', monospace; }
+    .nav-track { max-width: 200px; color: var(--ink); font-size: .78rem; }
+    .container { max-width: 1120px; }
+    .player-box {
+      grid-template-columns: minmax(250px, .9fr) minmax(320px, 1.1fr);
+      gap: clamp(24px, 5vw, 64px);
+      padding-top: 58px;
+    }
+    .player-box::before {
+      color: var(--cyan);
+      font: 600 .72rem 'DM Mono', monospace;
+      letter-spacing: .1em;
+      margin-bottom: -34px;
+      content: 'A LITTLE MUSIC FOR YOUR DAY';
+    }
+    .player-box::after {
+      top: 27px;
+      color: var(--muted);
+      font: 500 .62rem 'DM Mono', monospace;
+      letter-spacing: .08em;
+      content: '♪ PLAY SOMETHING NICE';
+      animation: none;
+    }
+    .featured-track, .queue-panel {
+      background: rgba(255, 253, 248, .94);
+      border: 1px dashed #d8d1c4;
+      border-radius: 22px 26px 20px 24px;
+      box-shadow: 4px 5px 0 rgba(52, 60, 53, .08);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+    .featured-track::before, .queue-panel::before,
+    .queue-panel::after { display: none; }
+    .featured-track { padding: clamp(18px, 3vw, 30px); }
+    .featured-track::after {
+      content: '✿';
+      position: absolute;
+      right: 18px;
+      bottom: 10px;
+      color: var(--acid);
+      font-size: 1.2rem;
+      transform: rotate(-12deg);
+    }
+    .featured-track h4::before {
+      color: var(--muted);
+      font: 500 .6rem 'DM Mono', monospace;
+      letter-spacing: .1em;
+      content: 'CURRENTLY PLAYING';
+    }
+    .queue-panel { align-self: start; padding: clamp(18px, 3vw, 26px); }
+    .cover-stage { width: 144px; max-width: 100%; margin-bottom: 22px; }
+    .cover-stage::before {
+      content: '';
+      position: absolute;
+      top: -7px;
+      left: 50%;
+      z-index: 2;
+      display: block;
+      width: 62px;
+      height: 17px;
+      background: rgba(226, 204, 168, .58);
+      border: 1px dashed rgba(126, 111, 87, .35);
+      transform: translateX(-50%) rotate(-4deg);
+    }
+    .cover-stage::after {
+      inset: 5px -6px -6px 5px;
+      z-index: -1;
+      border: 1px dashed var(--cyan);
+      border-radius: 11px 9px 12px 10px;
+      box-shadow: none;
+      opacity: .75;
+      transform: rotate(1deg);
+    }
+    .album-art {
+      width: 144px;
+      height: 144px;
+      border: 1px solid #e4ded2;
+      border-radius: 9px 12px 9px 11px;
+      box-shadow: 3px 4px 0 #e6d5c6;
+      transition: transform .25s ease, box-shadow .25s ease;
+    }
+    .album-art:hover {
+      transform: translate(-2px, -2px) rotate(-.5deg);
+      box-shadow: 5px 6px 0 #e6d5c6;
+    }
+    h4 { color: var(--ink); line-height: 1.08; letter-spacing: -.035em; }
+    #current-genre { color: var(--cyan) !important; font-size: .72rem; }
+    .queue-heading {
+      position: relative;
+      color: var(--ink);
+      border-bottom: 1px dashed #d8d1c4;
+      font-size: 1.35rem;
+    }
+    .queue-heading::before { display: none; }
+    .queue-heading::after { color: var(--muted); content: '13 SONGS'; }
+    #queue { max-height: min(650px, calc(100vh - 210px)); padding-right: 3px; }
+    #queue::-webkit-scrollbar { width: 5px; }
+    #queue::-webkit-scrollbar-thumb { background: #c8d6ce; border-radius: 6px; }
+    .queue-item {
+      min-height: 70px;
+      gap: 13px;
+      border-bottom: 1px dashed #e8e2d6;
+      border-radius: 10px;
+      color: #515950;
+      font-size: .86rem;
+    }
+    .queue-item:hover {
+      background: #f2f3eb;
+      color: var(--ink);
+      padding-left: 15px;
+      transform: none;
+    }
+    .queue-item img {
+      width: 50px;
+      height: 50px;
+      border: 1px solid #e4ded2;
+      border-radius: 10px 8px 11px 9px;
+      box-shadow: 1px 2px 0 #e6d5c6;
+    }
+    .queue-item.active {
+      background: #eaf0e9;
+      color: var(--ink);
+      box-shadow: inset 3px 0 var(--cyan);
+    }
+    .now-playing {
+      grid-template-columns: minmax(170px, 1fr) minmax(250px, 2fr) minmax(130px, 1fr);
+      gap: 22px;
+      padding: 12px clamp(16px, 4vw, 48px);
+      background: rgba(255, 253, 248, .97);
+      border-top: 1px solid #e4ded2;
+      box-shadow: 0 -4px 16px rgba(52, 60, 53, .06);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+    }
+    .song-name { gap: 11px; }
+    .song-art {
+      width: 48px;
+      height: 48px;
+      border: 1px solid #e4ded2;
+      border-radius: 10px 8px 11px 9px;
+      box-shadow: 1px 2px 0 #e6d5c6;
+    }
+    #current-song-name { color: var(--ink); font-size: .8rem; }
+    .progress { height: 5px; background: #e9e5dc; border-radius: 8px; }
+    .progress-bar { height: 5px; background: var(--cyan); border-radius: 8px; box-shadow: none; }
+    .time { color: var(--muted); }
+    .controls { gap: 10px; }
+    .controls button { width: 38px; height: 38px; color: #626a61; }
+    .controls button:hover { color: var(--cyan); transform: scale(1.06); }
+    .controls button.active { color: var(--cyan); }
+    #play {
+      width: 42px;
+      height: 42px;
+      background: var(--ink);
+      color: #fffdf8;
+      box-shadow: 2px 3px 0 #c9d5cb;
+    }
+    .extra-controls { color: var(--muted); }
+    .volume-slider { accent-color: var(--cyan); }
+    body.is-playing .featured-track, body.is-playing .now-playing {
+      box-shadow: 4px 5px 0 rgba(52, 60, 53, .08);
+    }
+    @media (max-width: 768px) {
+      body { margin-bottom: 174px; }
+      .navbar-brand { max-width: 55%; font-size: .74rem; }
+      .nav-now, .navbar.scrolled .nav-now { max-width: 43%; gap: 8px; }
+      .nav-art-frame, .navbar.scrolled .nav-art-frame { width: 36px; height: 36px; }
+      .nav-track { max-width: 120px; font-size: .65rem; }
+      .nav-kicker { font-size: .49rem; }
+      .player-box { display: block; padding: 52px 0 30px; }
+      .player-box::before { margin-bottom: 24px; }
+      .player-box::after { top: 22px; right: 4px; }
+      .cover-stage { width: 144px; }
+      .queue-panel { margin-top: 34px; }
+      #queue { max-height: 340px; }
+      .now-playing {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 6px 12px;
+        padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+      }
+      .song-name { justify-content: flex-start; }
+      .song-art { width: 42px; height: 42px; }
+      #current-song-name { font-size: .73rem; }
+      .progress-container { grid-column: 1 / -1; grid-row: 2; min-width: 0; }
+      .controls { grid-column: 1 / -1; grid-row: 3; margin-top: 1px; }
+      .extra-controls { justify-content: flex-end; }
+      .volume-slider { width: 78px; }
+    }
+    @media (max-width: 420px) {
+      .navbar-brand { max-width: 48%; font-size: .68rem; }
+      .nav-now, .navbar.scrolled .nav-now { max-width: 49%; }
+      .nav-track { max-width: 92px; }
+      .now-playing { gap: 5px 8px; }
+      .extra-controls { gap: 6px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-dark">
+    <div class="container-fluid">
+      <div class="nav-shell">
+        <span class="navbar-brand mb-0 h1">ZEIMUSIC <hr> Kent is on the Paper album <span class="nav-led" aria-label="Music active"><i></i><i></i><i></i><i></i><i></i></span></span>
+        <div class="nav-now" aria-live="polite">
+          <div class="nav-art-frame"><img id="nav-art" class="nav-art" src="covers/song1.jpg" alt=""></div>
+          <div>
+            <span class="nav-kicker">LIVE SIGNAL / NOW PLAYING</span>
+            <strong id="nav-track" class="nav-track">Should I Try Now</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Player -->
+  <div class="container">
+    <div class="player-box text-center">
+      <section class="featured-track text-center">
+        <div class="cover-stage">
+          <img id="current-art" src="covers/song1.jpg" alt="Album Art" class="album-art">
+        </div>
+        <h4 id="current-title">Should I Try Now (By Shawn Kent)</h4>
+        <p id="current-genre" class="text-muted">Taglish Emo Rap</p>
+      </section>
+
+      <section class="queue-panel">
+        <h5 class="queue-heading">Queue</h5>
+        <div id="queue">
+        <div class="queue-item" data-src="songs/song1.mp3" data-title="Should I Try Now (By Kent is on the Paper)" data-genre="Taglish Emo Rap" data-art="covers/song1.jpg">
+          <img src="covers/song1.jpg" alt="Cover"> Should I Try Now (By Kent is on the Paper)
+        </div>
+        <div class="queue-item" data-src="songs/song2.mp3" data-title="Sure na Ba (By Kent is on the Paper)" data-genre="Reggae Slowed" data-art="covers/song2.jpg">
+          <img src="covers/song2.jpg" alt="Cover"> Sure na Ba? (By Kent is on the Paper)
+        </div>
+        <div class="queue-item" data-src="songs/song3.mp3" data-title="System Crash (By Kent is on the Paper)" data-genre="Rock" data-art="covers/song3.jpg">
+          <img src="covers/song3.jpg" alt="Cover"> System Crash (By Kent is on the Paper)
+        </div>
+        <div class="queue-item" data-src="songs/song4.mp3" data-title="I'll save you (By Kent is on the Paper)" data-genre="Lullaby Calm" data-art="covers/song4.jpg">
+          <img src="covers/song4.jpg" alt="Cover"> I'll save you (By Kent is on the Paper)
+        </div>
+        <div class="queue-item" data-src="songs/song5.mp3" data-title="Kent is on the Paper (By Kent is on the Paper)" data-genre="Pop Rap" data-art="covers/song5.jpg">
+          <img src="covers/song5.jpg" alt="Cover"> Kent is on the Paper (By Kent is on the Paper)
+        </div>
+        <div class="queue-item" data-src="songs/song6.mp3" data-title="Thank You, and Sorry (This Christmas) (By Kent is on the Paper)" data-genre="Bubbly" data-art="covers/song6.jpg">
+          <img src="covers/song6.jpg" alt="Cover"> Thank You, and Sorry (This Christmas) (By Kent is on the Paper)
+        </div>
+        <div class="queue-item" data-src="songs/song7.mp3" data-title="Six Petals (By Kent is on the Paper)" data-genre="Bubbly" data-art="covers/song7.jpg">
+          <img src="covers/song7.jpg" alt="Cover"> Six Petals (By Kent is on the Paper)
+        </div>
+        <div class="queue-item" data-src="songs/song8.mp3" data-title="Until the Rain Will Stop (By Kent is on the Paper)" data-genre="Sad Song" data-art="covers/song8.jpg">
+          <img src="covers/song8.jpg" alt="Cover"> Until the Rain Will Stop (By Kent is on the Paper)
+        </div>
+        <div class="queue-item" data-src="songs/song9.mp3" data-title="Under the Christmas Sky (By Kent is on the Paper)" data-genre="Carol Jingle" data-art="covers/song9.jpg">
+          <img src="covers/song9.jpg" alt="Cover"> Under the Christmas Sky (By Kent is on the Paper)
+        </div>
+        <div class="queue-item" data-src="songs/song10.mp3" data-title="Hanggang tingin lang ba? (By Kent is on the Paper)" data-genre="Lofi" data-art="covers/song10.jpg">
+          <img src="covers/song10.jpg" alt="Cover"> Hanggang tingin lang ba? (By Kent is on the Paper)
+        </div>
+        <div class="queue-item" data-src="songs/song11.mp3" data-title="Hanggang tingin lang ba? REMAKE (By Kent is on the Paper)" data-genre="Lofi" data-art="covers/song11.jpg">
+          <img src="covers/song11.jpg" alt="Cover"> Hanggang tingin lang ba? REMAKE (By Kent is on the Paper)
+        </div>
+        <div class="queue-item" data-src="songs/song12.mp3" data-title="Gusto kita! (By Kent is on the Paper)" data-genre="upbeat" data-art="covers/song12.jpg">
+          <img src="covers/song12.jpg" alt="Cover"> Gusto kita! (By Kent is on the Paper)
+        </div>
+        <div class="queue-item" data-src="songs/song13.mp3" data-title="SM (Sana Minsan) (By Kent is on the Paper)" data-genre="Relapse" data-art="covers/song13.svg">
+          <img src="covers/song13.svg" alt="Cover"> SM (Sana Minsan) (By Kent is on the Paper)
+        </div>
+
+
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Hidden audio element -->
+  <audio id="audio-player"></audio>
+
+  <!-- Custom bottom bar -->
+  <div class="now-playing">
+    <div class="song-name d-flex align-items-center">
+      <img id="current-song-art" src="covers/song1.jpg" alt="Song Art" class="song-art">
+      <h5 id="current-song-name">Should I Try Now (By Shawn Kent)</h5>
+    </div>
+
+    <div class="progress-container">
+      <div class="progress"><div id="progress-bar" class="progress-bar"></div></div>
+      <div class="d-flex justify-content-between">
+        <span id="current-time" class="time">0:00</span>
+        <span id="duration" class="time">0:00</span>
+      </div>
+      <div class="controls">
+        <button id="prev" aria-label="Previous song" title="Previous song"><div data-lucide="skip-back"></div></button>
+        <button id="play" aria-label="Play song" title="Play song"><div data-lucide="play"></div></button>
+        <button id="next" aria-label="Next song" title="Next song"><div data-lucide="skip-forward"></div></button>
+        <button id="shuffle" aria-label="Toggle shuffle" title="Toggle shuffle"><div data-lucide="shuffle"></div></button>
+        <button id="repeat" aria-label="Toggle repeat" title="Toggle repeat"><div data-lucide="repeat"></div></button>
+      </div>
+    </div>
+
+    <div class="extra-controls">
+      <div data-lucide="volume-2"></div>
+      <label for="volume" class="visually-hidden">Volume</label>
+      <input type="range" id="volume" class="volume-slider" min="0" max="1" step="0.01" value="1">
+    </div>
+  </div>
+
+  <script>
+  const audioPlayer = document.getElementById('audio-player');
+  const playBtn = document.getElementById('play');
+  const prevBtn = document.getElementById('prev');
+  const nextBtn = document.getElementById('next');
+  const shuffleBtn = document.getElementById('shuffle');
+  const repeatBtn = document.getElementById('repeat');
+  const progressBar = document.getElementById('progress-bar');
+  const progressContainer = document.querySelector('.progress');
+  const currentTimeEl = document.getElementById('current-time');
+  const durationEl = document.getElementById('duration');
+  const queueItems = document.querySelectorAll('.queue-item');
+  const volumeSlider = document.getElementById('volume');
+
+  const currentArt = document.getElementById('current-art');
+  const currentTitle = document.getElementById('current-title');
+  const currentGenre = document.getElementById('current-genre');
+  const currentSongArt = document.getElementById('current-song-art');
+  const currentSongName = document.getElementById('current-song-name');
+  const navBar = document.querySelector('.navbar');
+  const navArt = document.getElementById('nav-art');
+  const navTrack = document.getElementById('nav-track');
+  const ledBars = document.querySelectorAll('.nav-led i');
+
+  let currentIndex = 0;
+  let isShuffle = false;
+  let isRepeat = false;
+  const mediaSession = 'mediaSession' in navigator ? navigator.mediaSession : null;
+
+  function updateMediaMetadata(item) {
+    if (!mediaSession || !('MediaMetadata' in window)) return;
+    const highResolutionArt = item.dataset.art.endsWith('.jpg')
+      ? item.dataset.art.replace('covers/', 'covers/hires/')
+      : item.dataset.art;
+    const artworkUrl = new URL(highResolutionArt, document.baseURI).href;
+    const artworkType = artworkUrl.endsWith('.svg') ? 'image/svg+xml' : 'image/jpeg';
+    const artworkSize = artworkType === 'image/svg+xml' ? '512x512' : '720x720';
+    mediaSession.metadata = new MediaMetadata({
+      title: item.dataset.title.replace(/\s*\(By Kent is on the Paper\)\s*$/, ''),
+      artist: 'Kent is on the Paper',
+      album: 'Kent is on the Paper',
+      artwork: [
+        { src: artworkUrl, sizes: artworkSize, type: artworkType }
+      ]
+    });
+  }
+
+  function setMediaAction(action, handler) {
+    if (!mediaSession) return;
+    try {
+      mediaSession.setActionHandler(action, handler);
+    } catch (error) {
+      if (!(error instanceof TypeError) && error.name !== 'NotSupportedError') throw error;
+    }
+  }
+
+  setMediaAction('play', () => audioPlayer.play());
+  setMediaAction('pause', () => audioPlayer.pause());
+  setMediaAction('previoustrack', () => {
+    if (currentIndex > 0) playSong(currentIndex - 1);
+  });
+  setMediaAction('nexttrack', () => {
+    if (currentIndex < queueItems.length - 1) playSong(currentIndex + 1);
+  });
+
+  function playSong(index) {
+    const item = queueItems[index];
+    audioPlayer.src = item.dataset.src;
+    updateMediaMetadata(item);
+    audioPlayer.play().catch(() => {});
+    currentIndex = index;
+
+    // Update main player info
+    currentArt.src = item.dataset.art;
+    currentTitle.textContent = item.dataset.title;
+    currentGenre.textContent = item.dataset.genre;
+
+    // Update bottom bar song info
+    currentSongArt.src = item.dataset.art;
+    currentSongName.textContent = item.dataset.title;
+    navArt.src = item.dataset.art;
+    navTrack.textContent = item.dataset.title;
+
+    // Highlight active track
+    queueItems.forEach(q => q.classList.remove('active'));
+    item.classList.add('active');
+
+    playBtn.innerHTML = '<div data-lucide="pause"></div>';
+    lucide.createIcons();
+  }
+
+  playBtn.addEventListener('click', () => {
+    if (audioPlayer.paused) {
+      audioPlayer.play().catch(() => {});
+      playBtn.innerHTML = '<div data-lucide="pause"></div>';
+    } else {
+      audioPlayer.pause();
+      playBtn.innerHTML = '<div data-lucide="play"></div>';
+    }
+    lucide.createIcons();
+  });
+
+  audioPlayer.addEventListener('play', () => {
+    document.body.classList.add('is-playing');
+    if (mediaSession) mediaSession.playbackState = 'playing';
+    playBtn.innerHTML = '<div data-lucide="pause"></div>';
+    lucide.createIcons();
+  });
+
+  audioPlayer.addEventListener('pause', () => {
+    document.body.classList.remove('is-playing');
+    if (mediaSession) mediaSession.playbackState = 'paused';
+    playBtn.innerHTML = '<div data-lucide="play"></div>';
+    lucide.createIcons();
+  });
+
+  prevBtn.addEventListener('click', () => {
+    if (currentIndex > 0) playSong(currentIndex - 1);
+  });
+
+  nextBtn.addEventListener('click', () => {
+    if (currentIndex < queueItems.length - 1) playSong(currentIndex + 1);
+  });
+
+  // Shuffle toggle
+  shuffleBtn.addEventListener('click', () => {
+    isShuffle = !isShuffle;
+    shuffleBtn.classList.toggle('active', isShuffle);
+  });
+
+  // Repeat toggle
+  repeatBtn.addEventListener('click', () => {
+    isRepeat = !isRepeat;
+    repeatBtn.classList.toggle('active', isRepeat);
+  });
+
+  audioPlayer.addEventListener('ended', () => {
+    if (isRepeat) {
+      playSong(currentIndex); // replay same track
+    } else if (isShuffle) {
+      const randomIndex = Math.floor(Math.random() * queueItems.length);
+      playSong(randomIndex);
+    } else if (currentIndex < queueItems.length - 1) {
+      playSong(currentIndex + 1);
+    } else {
+      if (mediaSession) mediaSession.playbackState = 'none';
+      playBtn.innerHTML = '<div data-lucide="play"></div>';
+      lucide.createIcons();
+    }
+  });
+
+  audioPlayer.addEventListener('timeupdate', () => {
+    const percent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+    progressBar.style.width = percent + '%';
+    currentTimeEl.textContent = formatTime(audioPlayer.currentTime);
+    durationEl.textContent = formatTime(audioPlayer.duration);
+  });
+
+  progressContainer.addEventListener('click', (e) => {
+    const width = progressContainer.clientWidth;
+    const clickX = e.offsetX;
+    const duration = audioPlayer.duration;
+    audioPlayer.currentTime = (clickX / width) * duration;
+  });
+
+  function formatTime(sec) {
+    if (isNaN(sec)) return "0:00";
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  queueItems.forEach((item, index) => {
+    item.addEventListener('click', () => playSong(index));
+  });
+
+  // Volume control
+  volumeSlider.addEventListener('input', () => {
+    audioPlayer.volume = volumeSlider.value;
+  });
+
+  window.addEventListener('scroll', () => {
+    navBar.classList.toggle('scrolled', window.scrollY > 24);
+  }, { passive: true });
+
+  // Start with first song
+  playSong(0);
+</script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<script>
+  lucide.createIcons();
+</script>
